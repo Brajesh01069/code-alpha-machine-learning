@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edu-Analytics Dashboard</title>
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --bg-dark: #07090f;
+            --panel-bg: #0c101a;
+            --text-main: #e0e6ed;
+            --glow-cyan: 0 0 10px rgba(0, 243, 255, 0.3);
+            --glow-purple: 0 0 10px rgba(188, 19, 254, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 20px;
+            grid-template-rows: auto 1fr 1fr;
+        }
+
+        /* --- Header --- */
+        header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: var(--panel-bg);
+            border-bottom: 2px solid var(--neon-cyan);
+            box-shadow: var(--glow-cyan);
+            border-radius: 8px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--neon-cyan);
+        }
+
+        .user-badge {
+            background: rgba(188, 19, 254, 0.1);
+            border: 1px solid var(--neon-purple);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--neon-purple);
+            box-shadow: var(--glow-purple);
+        }
+
+        /* --- Dashboard Panels --- */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        /* --- Custom CSS Charts --- */
+        .metric-group {
+            margin-bottom: 20px;
+        }
+
+        .metric-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--neon-cyan);
+            box-shadow: var(--glow-cyan);
+            transition: width 0.5s ease;
+        }
+
+        .bar-fill.purple {
+            background: var(--neon-purple);
+            box-shadow: var(--glow-purple);
+        }
+
+        /* --- Data Cards --- */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .kpi-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px dashed rgba(0, 243, 255, 0.3);
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .kpi-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            margin: 10px 0;
+        }
+
+        /* --- Alerts Panel --- */
+        .alert-item {
+            background: rgba(255, 50, 50, 0.1);
+            border-left: 3px solid #ff3232;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+        }
+
+        .alert-item.optimizing {
+            background: rgba(0, 243, 255, 0.1);
+            border-left: 3px solid var(--neon-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <header>
+            <h1>Edu-Analytics: Performance & Resource Matrix</h1>
+            <div class="user-badge">Admin_ID: Brajesh // Dept: CSE</div>
+        </header>
+
+        <div class="panel" style="grid-column: span 2;">
+            <h2>B.Tech Academic Performance Overview</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div style="font-size: 0.8em; color: gray;">AVERAGE SEMESTER GPA</div>
+                    <div class="kpi-value" id="gpa-kpi">7.84</div>
+                    <div style="font-size: 0.8em; color: #00ff88;">▲ +0.12 from last semester</div>
+                </div>
+                <div class="kpi-card">
+                    <div style="font-size: 0.8em; color: gray;">PYTHON LAB PASS RATE</div>
+                    <div class="kpi-value" style="color: var(--neon-purple);" id="pass-kpi">92%</div>
+                    <div style="font-size: 0.8em; color: #00ff88;">▲ +3% from last semester</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 25px;">
+                <div class="metric-group">
+                    <div class="metric-label"><span>First-Year Physics Attendance</span> <span id="att-1">85%</span></div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 85%;" id="bar-1"></div></div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-label"><span>Engineering Chemistry Attendance</span> <span id="att-2">78%</span></div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 78%;" id="bar-2"></div></div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-label"><span>Mathematics-II Attendance</span> <span id="att-3">91%</span></div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: 91%;" id="bar-3"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Live Resource Usage</h2>
+            <div class="metric-group">
+                <div class="metric-label"><span>CSE Main Server Load</span> <span id="res-1">64%</span></div>
+                <div class="bar-bg"><div class="bar-fill purple" style="width: 64%;" id="rbar-1"></div></div>
+            </div>
+            <div class="metric-group">
+                <div class="metric-label"><span>Library Occupancy (Supaul Campus)</span> <span id="res-2">88%</span></div>
+                <div class="bar-bg"><div class="bar-fill purple" style="width: 88%;" id="rbar-2"></div></div>
+            </div>
+            <div class="metric-group">
+                <div class="metric-label"><span>Robotics Hardware Kits Avail.</span> <span id="res-3">42%</span></div>
+                <div class="bar-bg"><div class="bar-fill purple" style="width: 42%;" id="rbar-3"></div></div>
+            </div>
+            <div class="metric-group">
+                <div class="metric-label"><span>Bandwidth Consumption</span> <span id="res-4">75%</span></div>
+                <div class="bar-bg"><div class="bar-fill purple" style="width: 75%;" id="rbar-4"></div></div>
+            </div>
+        </div>
+
+        <div class="panel" style="grid-column: 1 / -1;">
+            <h2>Automated Decisions & Identified Gaps</h2>
+            
+            <div class="alert-item">
+                <strong>RESOURCE GAP DETECTED:</strong> Library occupancy is near 90%. 
+                <em>Recommendation: Open overflow study halls in Block B for upcoming mid-term examinations.</em>
+            </div>
+
+            <div class="alert-item optimizing">
+                <strong>SYSTEM ACTION:</strong> Server load spiked during the Python assignment submission window. 
+                <em>Automated Action: Dynamically allocated 2TB extra cloud storage to the CSE portal.</em>
+            </div>
+
+            <div class="alert-item optimizing">
+                <strong>PERFORMANCE INSIGHT:</strong> Mathematics-II shows high attendance but slightly lower test scores. 
+                <em>Recommendation: Allocate additional Teaching Assistants for weekly doubt-clearing sessions.</em>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Simulate live data fluctuations for the dashboard
+        setInterval(() => {
+            // Fluctuate Server Load (60 to 95)
+            let serverLoad = Math.floor(Math.random() * (95 - 60 + 1) + 60);
+            document.getElementById('res-1').innerText = serverLoad + '%';
+            document.getElementById('rbar-1').style.width = serverLoad + '%';
+
+            // Fluctuate Bandwidth (50 to 80)
+            let bandwidth = Math.floor(Math.random() * (80 - 50 + 1) + 50);
+            document.getElementById('res-4').innerText = bandwidth + '%';
+            document.getElementById('rbar-4').style.width = bandwidth + '%';
+
+            // Change color to red if load is too high
+            document.getElementById('rbar-1').style.background = serverLoad > 85 ? '#ff3232' : 'var(--neon-purple)';
+            document.getElementById('rbar-1').style.boxShadow = serverLoad > 85 ? '0 0 10px #ff3232' : 'var(--glow-purple)';
+
+        }, 3000); // Update every 3 seconds
+    </script>
+</body>
+</html>

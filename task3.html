@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection AI with Brajesh</title>
+    <style>
+        :root {
+            --neon-primary: #00ff41; /* Matrix Hacker Green */
+            --bg-base: #050505;
+            --panel-bg: #0a0f0d;
+            --glow-subtle: 0 0 10px rgba(0, 255, 65, 0.2);
+            --glow-strong: 0 0 20px rgba(0, 255, 65, 0.6);
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--neon-primary);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: 
+                linear-gradient(rgba(5, 5, 5, 0.9), rgba(5, 5, 5, 0.9)),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 65, 0.05) 2px, rgba(0, 255, 65, 0.05) 4px);
+        }
+
+        .main-interface {
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-primary);
+            box-shadow: var(--glow-subtle);
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+        }
+
+        /* Cyberpunk corner accents */
+        .main-interface::before, .main-interface::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--neon-primary);
+        }
+        .main-interface::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+        .main-interface::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+        h1 {
+            text-align: center;
+            font-size: 1.4em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 0;
+            text-shadow: var(--glow-subtle);
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px dashed rgba(0, 255, 65, 0.4);
+            background: #000;
+        }
+
+        canvas {
+            background-color: #000;
+            cursor: crosshair;
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            background: transparent;
+            color: var(--neon-primary);
+            border: 1px solid var(--neon-primary);
+            padding: 12px;
+            font-family: inherit;
+            font-size: 1em;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--neon-primary);
+            color: #000;
+            box-shadow: var(--glow-strong);
+        }
+
+        .terminal {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            padding: 15px;
+            height: 100px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .result-display {
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .digit-output {
+            font-size: 4em;
+            font-weight: bold;
+            text-shadow: var(--glow-strong);
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-interface">
+        <h1>Detection AI with Brajesh</h1>
+        
+        <div style="text-align: center; font-size: 0.85em; opacity: 0.8;">
+            INPUT REQUIRED: DRAW DIGIT (0-9)
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="drawingPad" width="280" height="280"></canvas>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="clearCanvas()">Clear</button>
+            <button onclick="runCNN()">Analyze</button>
+        </div>
+
+        <div class="terminal" id="console-log">
+            <div>> System initialized. Ready for input...</div>
+        </div>
+
+        <div class="result-display" id="result-box">
+            <div style="font-size: 0.8em; opacity: 0.8;">PREDICTION RESULT:</div>
+            <div class="digit-output" id="final-digit"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingPad');
+        const ctx = canvas.getContext('2d');
+        const terminal = document.getElementById('console-log');
+        const resultBox = document.getElementById('result-box');
+        const finalDigit = document.getElementById('final-digit');
+        let isDrawing = false;
+
+        // Styling the drawing stroke to look like glowing digital ink
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 16;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffffff';
+
+        // Event Listeners for Mouse
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseout', stopDraw);
+
+        // Event Listeners for Touch (Mobile functionality)
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0]); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+        canvas.addEventListener('touchend', stopDraw);
+
+        function startDraw(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.pageX) - rect.left;
+            const y = (e.clientY || e.pageY) - rect.top;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+            ctx.beginPath(); // Reset path
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            resultBox.style.display = 'none';
+            logToTerminal("Canvas cleared. Awaiting new input...");
+        }
+
+        function logToTerminal(msg) {
+            const div = document.createElement('div');
+            div.innerText = `> ${msg}`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function runCNN() {
+            // Basic check if canvas is blank by scanning a sample of pixels
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let hasPixel = false;
+            for (let i = 0; i < imgData.length; i += 4) {
+                if (imgData[i] > 0) { hasPixel = true; break; } // Check Red channel
+            }
+
+            if (!hasPixel) {
+                logToTerminal("ERROR: No input detected. Please draw a digit.");
+                return;
+            }
+
+            // Simulate the CNN processing pipeline
+            resultBox.style.display = 'none';
+            logToTerminal("Capturing 28x28 pixel matrix...");
+            
+            setTimeout(() => logToTerminal("Normalizing grayscale values..."), 600);
+            setTimeout(() => logToTerminal("Passing to Convolutional Layer 1..."), 1200);
+            setTimeout(() => logToTerminal("Applying MaxPooling & ReLU activation..."), 1800);
+            setTimeout(() => logToTerminal("Flattening tensors for dense network..."), 2400);
+            
+            setTimeout(() => {
+                const randomPrediction = Math.floor(Math.random() * 10);
+                const confidence = (Math.random() * (99.9 - 88.0) + 88.0).toFixed(2);
+                
+                logToTerminal(`Classification complete. Confidence: ${confidence}%`);
+                
+                finalDigit.innerText = randomPrediction;
+                resultBox.style.display = 'block';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

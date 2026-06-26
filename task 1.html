@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Scoring Terminal</title>
+    <style>
+        :root {
+            --neon-primary: #00ffcc;
+            --neon-alert: #ff0055;
+            --bg-color: #05080f;
+            --panel-bg: rgba(0, 255, 204, 0.03);
+            --border-glow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--neon-primary);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at 50% 50%, #0a1122 0%, #05080f 100%);
+        }
+
+        .terminal-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-primary);
+            box-shadow: var(--border-glow);
+            padding: 30px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--neon-primary);
+            box-shadow: 0 0 15px var(--neon-primary);
+        }
+
+        h2 {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 0;
+            text-shadow: 0 0 8px var(--neon-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(0, 255, 204, 0.4);
+            color: #fff;
+            padding: 10px;
+            font-family: inherit;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--neon-primary);
+            box-shadow: inset 0 0 5px var(--neon-primary);
+        }
+
+        button {
+            width: 100%;
+            background: transparent;
+            color: var(--neon-primary);
+            border: 1px solid var(--neon-primary);
+            padding: 12px;
+            font-family: inherit;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: var(--neon-primary);
+            color: var(--bg-color);
+            box-shadow: 0 0 15px var(--neon-primary);
+        }
+
+        #result-panel {
+            margin-top: 25px;
+            padding: 15px;
+            border: 1px dashed rgba(0, 255, 204, 0.4);
+            text-align: center;
+            display: none;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .approved {
+            color: var(--neon-primary);
+            border-color: var(--neon-primary) !important;
+            text-shadow: 0 0 5px var(--neon-primary);
+        }
+
+        .denied {
+            color: var(--neon-alert);
+            border-color: var(--neon-alert) !important;
+            text-shadow: 0 0 5px var(--neon-alert);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="terminal-container">
+        <h2>sys.credit_eval()</h2>
+        
+        <div class="form-group">
+            <label for="income">Annual Income (₹)</label>
+            <input type="number" id="income" placeholder="e.g. 500000" required>
+        </div>
+
+        <div class="form-group">
+            <label for="debt">Total Current Debt (₹)</label>
+            <input type="number" id="debt" placeholder="e.g. 50000" required>
+        </div>
+
+        <div class="form-group">
+            <label for="history">Credit History (Years)</label>
+            <input type="number" id="history" placeholder="e.g. 5" required>
+        </div>
+
+        <div class="form-group">
+            <label for="missed">Missed Payments (Count)</label>
+            <input type="number" id="missed" placeholder="e.g. 0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="utilization">Credit Utilization (%)</label>
+            <input type="number" id="utilization" placeholder="e.g. 30" required>
+        </div>
+
+        <button onclick="calculateCreditScore()">Run Analysis</button>
+
+        <div id="result-panel">
+            <span id="status-text"></span>
+            <div id="score-text" style="font-size: 0.8em; margin-top: 5px; font-weight: normal;"></div>
+        </div>
+    </div>
+
+    <script>
+        function calculateCreditScore() {
+            // Retrieve input values
+            const income = parseFloat(document.getElementById('income').value) || 0;
+            const debt = parseFloat(document.getElementById('debt').value) || 0;
+            const history = parseFloat(document.getElementById('history').value) || 0;
+            const missed = parseFloat(document.getElementById('missed').value) || 0;
+            // Convert percentage to decimal
+            const utilization = (parseFloat(document.getElementById('utilization').value) || 0) / 100; 
+
+            const panel = document.getElementById('result-panel');
+            const statusText = document.getElementById('status-text');
+            const scoreText = document.getElementById('score-text');
+
+            // Simulate the Python Feature Engineering logic
+            // (High income & history = Good. High debt, missed payments, high utilization = Bad)
+            const score = (income / 150000) 
+                        + (history * 0.5) 
+                        - (debt / 100000) 
+                        - (missed * 2.5) 
+                        - (utilization * 5);
+
+            panel.style.display = 'block';
+
+            if (score > 0) {
+                panel.className = 'approved';
+                statusText.innerText = "[ ACCESS GRANTED: CREDITWORTHY ]";
+            } else {
+                panel.className = 'denied';
+                statusText.innerText = "[ ACCESS DENIED: HIGH RISK ]";
+            }
+
+            scoreText.innerText = `Calculated Health Score: ${score.toFixed(2)}`;
+        }
+    </script>
+
+</body>
+</html>

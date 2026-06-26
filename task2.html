@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Emotion Recognition UI</title>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ea;
+            --bg-color: #030613;
+            --panel-bg: rgba(0, 243, 255, 0.05);
+            --border-glow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--neon-blue);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: 
+                linear-gradient(rgba(3, 6, 19, 0.9), rgba(3, 6, 19, 0.9)),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 243, 255, 0.1) 2px, rgba(0, 243, 255, 0.1) 4px);
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 600px;
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-blue);
+            box-shadow: var(--border-glow);
+            padding: 30px;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .dashboard::before {
+            content: "AUDIO_ANALYSIS_NODE_v2.1";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--bg-color);
+            padding: 0 10px;
+            font-size: 0.8em;
+            color: var(--neon-pink);
+            border-left: 1px solid var(--neon-pink);
+            border-right: 1px solid var(--neon-pink);
+        }
+
+        h2 {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--neon-blue);
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            background: transparent;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 12px;
+            font-family: inherit;
+            font-size: 1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        button.record-btn:hover {
+            background: var(--neon-pink);
+            border-color: var(--neon-pink);
+            color: white;
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        .visualizer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+            height: 80px;
+            margin: 30px 0;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .bar {
+            width: 8px;
+            background-color: var(--neon-blue);
+            height: 5px;
+            box-shadow: 0 0 5px var(--neon-blue);
+            transition: height 0.1s ease;
+        }
+
+        .terminal-log {
+            height: 120px;
+            background: rgba(0,0,0,0.5);
+            border: 1px dashed rgba(0, 243, 255, 0.3);
+            padding: 10px;
+            font-size: 0.85em;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .log-entry {
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .result-box {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid var(--neon-pink);
+            display: none;
+            box-shadow: inset 0 0 15px rgba(255, 0, 234, 0.1);
+        }
+
+        .emotion-label {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--neon-pink);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--neon-pink);
+            letter-spacing: 2px;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <h2>Emotion Recognition</h2>
+
+        <div class="controls">
+            <button class="record-btn" onclick="startAnalysis(true)">[ Rec ] Live Audio</button>
+            <button onclick="startAnalysis(false)">Upload .WAV</button>
+        </div>
+
+        <div class="visualizer" id="visualizer">
+            </div>
+
+        <div class="terminal-log" id="terminal">
+            <div>> System standing by...</div>
+        </div>
+
+        <div class="result-box" id="result-box">
+            <div style="font-size: 0.9em; margin-bottom: 10px; color: var(--neon-blue);">PRIMARY EMOTION DETECTED</div>
+            <div class="emotion-label" id="emotion-output">ANALYZING...</div>
+            <div id="confidence-output" style="margin-top: 10px; font-size: 0.85em;"></div>
+        </div>
+    </div>
+
+    <script>
+        const visualizer = document.getElementById('visualizer');
+        const terminal = document.getElementById('terminal');
+        const resultBox = document.getElementById('result-box');
+        const emotionOutput = document.getElementById('emotion-output');
+        const confidenceOutput = document.getElementById('confidence-output');
+        let visualizerInterval;
+
+        // Generate audio bars
+        for (let i = 0; i < 30; i++) {
+            let bar = document.createElement('div');
+            bar.className = 'bar';
+            visualizer.appendChild(bar);
+        }
+        const bars = document.querySelectorAll('.bar');
+
+        function animateVisualizer() {
+            bars.forEach(bar => {
+                // Random height between 5px and 80px
+                bar.style.height = Math.floor(Math.random() * 75 + 5) + 'px'; 
+            });
+        }
+
+        function addLog(message) {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerText = `> ${message}`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function startAnalysis(isLive) {
+            // Reset UI
+            clearInterval(visualizerInterval);
+            terminal.innerHTML = '';
+            resultBox.style.display = 'none';
+            
+            const source = isLive ? "microphone input" : "audio file";
+            addLog(`Connecting to ${source}...`);
+            
+            // Start fake visualizer
+            visualizerInterval = setInterval(animateVisualizer, 100);
+
+            // Simulate Pipeline Steps via Timeouts
+            setTimeout(() => addLog("Applying Pre-emphasis filter..."), 800);
+            setTimeout(() => addLog("Framing and Windowing audio signal..."), 1600);
+            setTimeout(() => addLog("Computing Fast Fourier Transform (FFT)..."), 2400);
+            setTimeout(() => addLog("Extracting MFCCs (Mel-Frequency Cepstral Coefficients)..."), 3200);
+            setTimeout(() => {
+                addLog("Loading LSTM/CNN deep learning model...");
+                clearInterval(visualizerInterval); // Stop visualizer
+                bars.forEach(bar => bar.style.height = '5px'); // Reset bars
+            }, 4200);
+            
+            setTimeout(() => addLog("Running inference on tensors..."), 4800);
+            
+            setTimeout(() => {
+                addLog("Classification complete.");
+                showResult();
+            }, 5500);
+        }
+
+        function showResult() {
+            const emotions = ["Angry", "Happy", "Sad", "Neutral", "Surprised"];
+            const colors = ["#ff0055", "#00ffcc", "#0066ff", "#aaaaaa", "#ffcc00"];
+            
+            // Pick a random emotion for the simulation
+            const randomIndex = Math.floor(Math.random() * emotions.length);
+            const selectedEmotion = emotions[randomIndex];
+            const confidence = (Math.random() * (99.8 - 85.0) + 85.0).toFixed(2);
+
+            emotionOutput.innerText = selectedEmotion;
+            emotionOutput.style.color = colors[randomIndex];
+            emotionOutput.style.textShadow = `0 0 10px ${colors[randomIndex]}`;
+            
+            document.querySelector('.result-box').style.borderColor = colors[randomIndex];
+            
+            confidenceOutput.innerText = `CONFIDENCE SCORE: ${confidence}% | DATASET: RAVDESS`;
+            resultBox.style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
